@@ -23,45 +23,47 @@ void init_shell_struct(t_shell *shell, char **argv, char **env)
  * Return: The exit status of the shell.
  */
 
-int main(int __attribute__((unused))argc, char **argv, char **env)
+int main(int __attribute__((unused)) argc, char **argv, char **env)
 {
 	t_shell shell;
 
 	init_shell_struct(&shell, argv, env);
+
 	sigintHandler(0);
+
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
+		{
 			_putstr("$ ");
+		}
+
 		shell.line = get_next_line(STDIN_FILENO);
+
 		if (!shell.line)
 		{
 			if (isatty(STDIN_FILENO))
+			{
 				_putchar('\n');
-			free(shell.line);
+			}
 			break;
 		}
-		if (shell.line[0] == '\n')
-		{
-			free(shell.line);
-			continue;
-		}
+
 		cut_string(shell.line);
 		shell.tokens = ft_split(shell.line, " \t\r\n");
-		if (!shell.tokens)
+
+		if (shell.tokens)
 		{
-			free(shell.line);
-			continue;
-		}
-		if (!shell.tokens[0])
-		{
-			free(shell.line);
+			if (shell.tokens[0])
+			{
+				shell.status = execute(&shell);
+			}
+
 			free_tokens(shell.tokens);
-			continue;
 		}
-		shell.status = execute(&shell);
+
 		free(shell.line);
-		free_tokens(shell.tokens);
 	}
 	return (shell.status);
 }
+
