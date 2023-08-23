@@ -1,43 +1,67 @@
 #include "simple_shell.h"
 
 /**
- * main - function for the simple shell.
- *
- * @ac: Number of command-line arguments.
- * @av: Array of command-line argument strings.
- * @environ: Array of environment variables.
- * Return: Returns 0 upon successful execution.
+ * init_shell_struct - Initialize the shell structure
+ * @shell: Pointer to the shell structure to be initialized
+ * @argv: Command-line argument array
+ * @env: Environment variable array
  */
-int main(int ac, char **av, char **environ)
+
+void init_shell_struct(t_shell *shell, char **argv, char **env)
 {
-	shell_t data;
-	env_t *env;
+	shell->argv = argv;
+	shell->env = env;
+	shell->error_counter = 0;
+	shell->status = 0;
+}
 
-	(void)av;
-	if (ac != 1)
-	{
-		exit(1);
-	}
+/**
+ * main - Entry point of the shell program
+ * @argc: Number of command-line arguments
+ * @argv: Array of command-line argument strings
+ * @env: Array of environment variable strings
+ * Return: The exit status of the shell.
+ */
 
-	env = NULL;
-	fill_envlist(&env, environ);
-	shell_signals();
+int main(int __attribute__((unused))argc, char **argv, char **env)
+{
+	t_shell shell;
+
+	init_shell_struct(&shell, argv, env);
+	sigintHandler(0);
 	while (1)
 	{
-		write(1, "shell> ", 7);
-		data.read = getline(&data.line, &data.line_len, stdin);
-		if (data.read == -1)
+		if (isatty(STDIN_FILENO))
+			_putstr("$ ");
+		shell.line = get_next_line(STDIN_FILENO);
+		if (!shell.line)
 		{
-			free_list(&env);
-			exit(0);
+			if (isatty(STDIN_FILENO))
+				_putchar('\n');
+			free(shell.line);
+			break;
 		}
-		if (data.line[data.read - 1] == '\n')
+		if (shell.line[0] == '\n')
 		{
-			data.line[data.read - 1] = '\0';
+			free(shell.line);
+			continue;
 		}
-		data.cmd = ft_split(data.line, ' ');
-		execute_command(&env, data.cmd, environ);
-		free_split(data.cmd);
+		cut_string(shell.line);
+		shell.tokens = ft_split(shell.line, " \t\r\n");
+		if (!shell.tokens)
+		{
+			free(shell.line);
+			continue;
+		}
+		if (!shell.tokens[0])
+		{
+			free(shell.line);
+			free_tokens(shell.tokens);
+			continue;
+		}
+		shell.status = execute(&shell);
+		free(shell.line);
+		free_tokens(shell.tokens);
 	}
-	return (0);
+	return (shell.status);
 }

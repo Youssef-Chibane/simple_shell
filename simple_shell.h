@@ -1,95 +1,79 @@
-#ifndef SIMPLE_SHELL_H
-#define SIMPLE_SHELL_H
+#ifndef SHELL_H
+#define SHELL_H
 
-# include <unistd.h>
-# include <dirent.h>
-# include <stdlib.h>
-# include <fcntl.h>
-# include <stdio.h>
-# include <signal.h>
-# include <sys/stat.h>
-# include <string.h>
-# include <sys/wait.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
-/**
- * struct shell_s - Structure to hold shell-related information.
- *
- * @line: The input line provided to the shell.
- * @cmd: An array of command strings.
- * @line_len: The length of the input line.
- * @read: The number of characters read.
- */
-
-typedef struct	shell_s
-{
-	char	*line;
-	char	**cmd;
-	size_t	line_len;
-	int		read;
-}				shell_t;
+#define BUFFER_SIZE 5
 
 /**
- * struct env_s - Structure to hold information about an environment variable.
- *
- * @var: The environment variable in the format "name=value".
- * @key: The name of the environment variable.
- * @content: The value/content of the environment variable.
- * @next: A pointer to the next element in the environment linked list.
- */
+ * struct s_shell - shell struct
+ * @argv: arguments
+ * @env: environement
+ * @line: the command line
+ * @tokens: command tokens
+ * @error_counter: number of the error
+ * @status: the status code
+ * Description: shell struct
+*/
 
-typedef struct env_s
+typedef struct s_shell
 {
-	char			*var;
-	char			*key;
-	char			*content;
-	struct env_s	*next;
-}				env_t;
+char **argv;
+char **env;
+char *line;
+char **tokens;
+int status;
+int error_counter;
+}   t_shell;
 
-/**
- * struct s_splitvar - Structure to hold variables
- * for string splitting operations.
- *
- * @i: Integer counter for various purposes.
- * @j: Integer counter for various purposes.
- * @k: Integer counter for various purposes.
- * @len: Length of a substring.
- * @count: Count of elements or substrings.
- * @strings: Array of strings.
- * @ptr: Pointer to a string.
- */
-
-typedef struct s_splitvar
-{
-	int		i;
-	int		j;
-	int		k;
-	int		len;
-	int		count;
-	char	**strings;
-	char	*ptr;
-}				t_splitvar;
+extern char **environ;
 
 
-void		*ft_calloc(size_t count, size_t size);
-char		**ft_split(const char *s, char c);
-char		*ft_strjoin(char const *s1, char const *s2);
-int			ft_strncmp(const char *s1, const char *s2, size_t n);
-char		*ft_strdup(const char *s1);
-char		*ft_substr(const char *s, unsigned int start, size_t len);
-size_t		ft_strlen(const char *s);
-void		ft_bzero(void *s, size_t n);
-char		**split_path(env_t **env);
-int			is_path_exist(env_t **env, char ***paths);
-char		*find_path(char **paths, char **args);
-char		*is_path_valid(char *path);
-int			path_access(char **path, char **path_arr, char **args);
-int			execute_command(env_t **env, char **args, char **environ);
-char		**equal_split(char *var);
-void		free_split(char **split);
-void		create_envnode(env_t **head, char *name, char *var, char *env_var);
-void		add_env_list(env_t **node, char *var);
-void		fill_envlist(env_t **env, char **environ);
-void		shell_signals(void);
-void		free_list(env_t **list);
+int     wordlen(char *s, char *delimiters);
+char    **ft_split(char *s, char *delimiters);
+void    print_env(void);
+int     handle_exit(t_shell *shell);
+int     builtins(t_shell *shell);
+char    *_getenv(char *name);
+int     get_last_exit(int action, int status);
+void    writerr(char **tokens, char **argv, int *error_counter);
+char    *is_file_in_path(char *path, char *file);
+char    *get_full_path(char **tokens);
+int     run_command(t_shell *shell);
+int     execute(t_shell *shell);
+char    *read_to_stash(int fd, char *stash);
+char    *get_line_from_stash(char *stash);
+char    *get_new_stash(char *stash);
+char	*get_next_line(int fd);
+char    *make_path(char *path, char *cmd);
+char    *get_path(char *cmd);
+int     _putchar(char c);
+void    _putstr(char *str);
+char    *_strncpy(char *dest, char *src, int n);
+int     count_words(char *s, char *delimiters);
+int     _strlen(char *s);
+char    *_strchr(const char *s, int c);
+char    *join(char *s1, char *s2);
+char	*ft_substr(char *s, int start, int len);
+char    *_strcpy(char *dest, char *src);
+char    *_memcpy(char *dest, char *src, unsigned int n);
+int     _isnumber(char *str);
+char    *_strdup(char *str);
+void    sigintHandler(int sig_num);
+int     _atoi(char *str);
+char    *_strcat(char *dest, char *src);
+void    free_tokens(char **ptr);
+void    cut_string(char *str);
+int     ft_nbrlen(int n);
+char    *_itoa(int n);
+char    *ft_strjoin(char *s1, char *s2);
+int     _strncmp(char *str1, char *str2, int n);
 
 #endif

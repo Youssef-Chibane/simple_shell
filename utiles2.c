@@ -1,156 +1,116 @@
 #include "simple_shell.h"
 
 /**
- * ft_nulljoin - Creates a new string by copying the content of another string.
- * @s1: The source string to be copied.
- * Return: A pointer to the new string, or NULL on allocation failure.
- */
+* _strlen - function that returns the length of a string
+* @s: the string that we will return its length
+* Return: return the string length
+*/
 
-static char *ft_nulljoin(char *s1)
+int _strlen(char *s)
 {
-	char *cat;
-	int i = 0;
+	 int length;
 
-	cat = malloc((ft_strlen(s1) + 1) * sizeof(char));
-	if (cat == NULL)
-		return (NULL);
-
-	while (s1[i])
+	for (length = 0; *s != '\0'; s++)
 	{
-		cat[i] = s1[i];
-		i++;
+	length++;
 	}
-
-	cat[i] = '\0';
-	return (cat);
+	return (length);
 }
 
 /**
- * ft_strjoin - Concatenates two strings into a new string.
- * @s1: The first string.
- * @s2: The second string.
- * Return: A pointer to the new concatenated string,
- * or NULL on allocation failure.
+ * _strchr - Locate character in string
+ * @s: The string to search
+ * @c: The character to find
+ * Return: Pointer to the first occurrence of character c in string s,
+ * or NULL if the character is not found.
  */
 
-char *ft_strjoin(char const *s1, char const *s2)
+char *_strchr(const char *s, int c)
 {
-	char *cat;
+	while (*s)
+	{
+		if (*s == c)
+			return ((char *)s);
+		s++;
+	}
+	if (c == '\0')
+		return ((char *)s);
+	return (NULL);
+}
+
+/**
+ * join - join two string
+ * @s1: string one
+ * @s2: string two
+ * Return: the joined string
+ */
+
+char *join(char *s1, char *s2)
+{
+	int size = _strlen(s1) + _strlen(s2);
+	char *str = malloc(sizeof(char) * (size + 1));
 	int i = 0;
 	int j = 0;
 
-	if (s2 == NULL)
-		return (ft_nulljoin((char *)s1));
-
-	cat = malloc((ft_strlen(s1) + ft_strlen(s2) + 1) * sizeof(char));
-	if (cat == NULL)
+	if (!str)
 		return (NULL);
-
-	while (s1[i] != '\0')
+	while (s1[i])
 	{
-		cat[i] = ((char *)s1)[i];
+		str[i] = s1[i];
 		i++;
 	}
-
-	while (s2[j] != '\0')
+	while (s2[j])
 	{
-		cat[i] = s2[j];
+		str[i + j] = s2[j];
 		j++;
-		i++;
 	}
-
-	cat[i] = '\0';
-	return (cat);
+	str[i + j] = '\0';
+	return (str);
 }
 
 /**
- * ft_strncmp - Compares two strings up to a specified number of characters.
- * @s1: The first string to compare.
- * @s2: The second string to compare.
- * @n: The maximum number of characters to compare.
- * Return: An integer less than, equal to, or greater than zero if s1 is found,
- * respectively, to be less than, to match, or be greater than s2.
- */
+* ft_substr - finds a substring
+* @s: the string in hand
+* @start: where to start substring
+* @len: the length of the substring
+* Return: the substring
+*/
 
-int ft_strncmp(const char *s1, const char *s2, size_t n)
+char	*ft_substr(char *s, int start, int len)
 {
-	size_t i = 0;
+	char	*substr;
 
-	while ((((unsigned char *)s1)[i] || ((unsigned char *)s2)[i]) && i < n)
-	{
-		if (((unsigned char *)s1)[i] == ((unsigned char *)s2)[i])
-			i++;
-		else if (((unsigned char *)s1)[i] > ((unsigned char *)s2)[i])
-			return (1);
-		else
-			return (-1);
-	}
-
-	return (0);
+	if (!s)
+		return (NULL);
+	if (start > _strlen(s))
+		return (_strdup(""));
+	if (start + len > _strlen(s))
+		len = _strlen(s) - start;
+	substr = malloc(sizeof(char) * (len + 1));
+	if (!substr)
+		return (NULL);
+	_memcpy(substr, s + start, len);
+	substr[len] = '\0';
+	return (substr);
 }
 
 /**
- * ft_strdup - Duplicates a string.
- * @s1: The source string to duplicate.
- * Return: A pointer to the newly allocated duplicated string,
- * or NULL on allocation failure.
+ * *_strcpy - copies the string pointed to by src
+ * including the terminating null byte (\0)
+ * to the buffer pointed to by dest
+ * @dest: pointer to the buffer in which we copy the string
+ * @src: string to be copied
+ * Return: the pointer to dest
  */
 
-char *ft_strdup(const char *s1)
+char *_strcpy(char *dest, char *src)
 {
-	int i = 0;
-	char *dest;
+	int i = -1;
 
-	if (s1 == NULL)
-		return (NULL);
-
-	dest = malloc((ft_strlen(s1) + 1) * sizeof(char));
-	if (dest == NULL)
-		return (NULL);
-
-	while (s1[i] != '\0')
-	{
-		dest[i] = s1[i];
+	do {
 		i++;
-	}
+		dest[i] = src[i];
+	} while (src[i] != '\0');
 
-	dest[i] = '\0';
 	return (dest);
-}
-
-/**
- * ft_substr - Extracts a portion of a string.
- * @s: The source string.
- * @start: The starting index of the substring extraction.
- * @len: The maximum length of the extracted substring.
- * Return: A pointer to the newly allocated substring, or NULL on failure.
- */
-
-char *ft_substr(const char *s, unsigned int start, size_t len)
-{
-	char *sub;
-	int i = 0;
-
-	if (start >= ft_strlen(s))
-	{
-		sub = malloc(1);
-		if (sub == NULL)
-			return (NULL);
-		sub[0] = '\0';
-		return (sub);
-	}
-
-	sub = malloc((len + 1) * sizeof(char));
-	if (s == NULL || sub == NULL)
-		return (NULL);
-
-	while (s[start] != '\0' && i < (int)len)
-	{
-		sub[i] = s[start];
-		i++;
-		start++;
-	}
-
-	sub[i] = '\0';
-	return (sub);
 }

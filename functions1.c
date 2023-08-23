@@ -1,136 +1,182 @@
 #include "simple_shell.h"
 
 /**
- * split_path - Splits the PATH environment variable into an array of strings.
- * @env: A pointer to the head of the environment linked list.
- * Return: A dynamically allocated array of strings containing the components
- * of the PATH variable. Returns NULL if PATH is not found or if env is empty.
+ * ft_split - Split a string into words using specified delimiters
+ * @s: The input string
+ * @delimiters: The string containing delimiter characters
+ *
+ * Return: An array of strings (words) extracted from the input string,
+ *         terminated by a NULL pointer.
  */
 
-char **split_path(env_t **env)
+char **ft_split(char *s, char *delimiters)
 {
-	env_t *temp;
-	char **path_split;
-	char *path;
+	int counter = 0;
+	char **words;
+	char *word;
 
-	if (!*env)
+	counter = 0;
+	words = (char **)malloc(sizeof(char *) * (count_words(s, delimiters) + 1));
+
+	if (!words)
 		return (NULL);
 
-	temp = *env;
-	while (temp)
+	while (*s)
 	{
-		if (ft_strncmp(temp->key, "PATH", 5) == 0)
+		while (*s && _strchr(delimiters, *s))
+			s++;
+
+		if (*s && !_strchr(delimiters, *s))
 		{
-			path = ft_strdup(temp->content);
-			path_split = ft_split(path, ':');
-			free(path);
-			return (path_split);
+			int word_length = wordlen(s, delimiters);
+
+			word = (char *)malloc(sizeof(char) * (word_length + 1));
+
+			if (!word)
+			{
+				free_tokens(words);
+				return (NULL);
+			}
+
+			_strncpy(word, s, word_length);
+			word[word_length] = '\0';
+			words[counter] = word;
+			counter++;
+			s += word_length;
 		}
-		temp = temp->next;
 	}
-	return (NULL);
+
+	words[counter] = NULL;
+	return (words);
 }
 
 /**
- * is_path_exist - Checks if a file or directory exists
- * in the paths from environment.
- * @env: A pointer to the head of the environment linked list.
- * @paths: A pointer to a char pointer array
- * to store the split PATH components.
- * @arg: The file or directory name to search for.
- * Return: 0 if the file/directory is found in PATH,
- * 127 if not found or error.
+ * print_env - Print the environment variables
+ *
+ * This function prints the environment variables to the standard output.
+ * Each environment variable is printed on a separate line.
  */
 
-int is_path_exist(env_t **env, char ***paths)
+void print_env(void)
 {
-	*paths = split_path(env);
+	int i = 0;
+	char **env = environ;
 
-	if (!*paths)
+	while (env[i])
 	{
-		printf("shell: no such file or directory\n");
-		return (127);
-	}
-
-	return (0);
-}
-
-/**
- * find_path - Finds the full path to an executable file in the given paths.
- * @paths: A pointer to an array of strings containing paths to search in.
- * @args: A pointer to an array of strings containing command and arguments.
- * Return: A dynamically allocated string with the full path to the executable,
- * or NULL if the executable is not found in any of the paths.
- */
-
-char *find_path(char **paths, char **args)
-{
-	int i;
-	char *path;
-	char *temp;
-	char *temp2;
-
-	i = 0;
-	while (paths[i])
-	{
-		temp = ft_strdup(paths[i]);
-		temp2 = ft_strjoin(temp, "/");
-		path = ft_strjoin(temp2, args[0]);
-
-		if (access(path, X_OK) == 0)
-		{
-			free(temp);
-			free(temp2);
-			return (path);
-		}
-
-		free(temp);
-		free(temp2);
-		free(path);
+		_putstr(env[i]);
+		_putchar('\n');
 		i++;
 	}
-
-	return (NULL);
 }
 
 /**
- * is_path_valid - Checks if a given path is both valid and executable.
- * @path: A pointer to a string containing the path to check.
- * Return: A dynamically allocated string with the valid executable path,
- * or NULL if the path is not valid or not executable.
+ * handle_exit - Handle the "exit" command in the shell
+ * @shell: Pointer to the shell structure
+ *
+ * This function handles the "exit" command. It checks for valid arguments,
+ * sets the exit status accordingly, and performs cleanup before exiting.
+ *
+ * Return: Exit status code (0 for success, 2 for error).
  */
 
-char *is_path_valid(char *path)
+int handle_exit(t_shell *shell)
 {
-	char *result;
-
-	if (!access(path, F_OK) && !access(path, X_OK))
+	if (!shell->tokens[1])
 	{
-		result = ft_strdup(path);
-		return (result);
+		free_tokens(shell->tokens);
+		free(shell->line);
+		exit(shell->status);
 	}
-
-	return (NULL);
-}
-
-/**
- * path_access - Checks if an executable file is
- * accessible within the given paths.
- * @path: A pointer to a string to store the full path to the executable.
- * @path_arr: A pointer to an array of strings containing paths to search in.
- * @args: A pointer to an array of strings containing command and arguments.
- * Return: 0 if the executable is accessible,
- * 127 if not found or not accessible.
- */
-
-int path_access(char **path, char **path_arr, char **args)
-{
-	*path = find_path(path_arr, args);
-
-	if (!*path)
+	if (_isnumber(shell->tokens[1]))
 	{
-		return (127);
+		shell->status = _atoi(shell->tokens[1]);
+		free_tokens(shell->tokens);
+		free(shell->line);
+		exit(shell->status);
 	}
+	else
+	{
+		char *err_str;
 
+		shell->error_counter++;
+		err_str = _itoa(shell->error_counter);
+		write(STDERR_FILENO, shell->argv[0], _strlen(shell->argv[0]));
+		write(STDERR_FILENO, ": ", 2);
+		write(STDERR_FILENO, err_str, _strlen(err_str));
+		write(STDERR_FILENO, ": ", 2);
+		free(err_str);
+		write(STDERR_FILENO, "exit: ", 6);
+		write(STDERR_FILENO, "Illegal number: ", 16);
+		write(STDERR_FILENO, shell->tokens[1], _strlen(shell->tokens[1]));
+		write(STDERR_FILENO, "\n", 1);
+		shell->status = 2;
+		return (2);
+	}
 	return (0);
+}
+
+/**
+ * builtins - Handle built-in commands in the shell
+ * @shell: Pointer to the shell structure
+ * This function checks for and handles built-in commands
+ * like "echo," "exit," and "env."
+ * It executes the corresponding action for each command.
+ * Return: 0 if the command is a built-in and was executed, 1 otherwise.
+ */
+
+int builtins(t_shell *shell)
+{
+
+	if (_strncmp(shell->tokens[0], "echo", 4) ==
+												0 && _strncmp(shell->tokens[0], "$?", 2))
+	{
+		printf("%d\n", shell->status);
+		return (0);
+	}
+	if (_strncmp(shell->tokens[0], "exit", 4) == 0)
+	{
+		handle_exit(shell);
+		return (0);
+	}
+	if (_strncmp(shell->tokens[0], "env", 3) == 0)
+	{
+		print_env();
+		return (0);
+	}
+
+	return (1);
+}
+
+/**
+ * _getenv - Get the value of an environment variable
+ * @name: The name of the environment variable
+ * This function searches for the environment variable with the specified name
+ * and returns its value.
+ * Return: The value of the environment variable, or NULL if not found.
+ */
+
+char *_getenv(char *name)
+{
+	char **env = NULL, *var = NULL, *value = NULL;
+	int i = 0, j = 0, len = 0;
+
+	env = environ;
+	while (env[i])
+	{
+		var = env[i];
+		len = _strlen(name);
+		for (j = 0; j < len; j++)
+		{
+			if (name[j] != var[j])
+				break;
+		}
+		if (j == len && var[j] == '=')
+		{
+			value = var + len + 1;
+			break;
+		}
+		i++;
+	}
+	return (value);
 }

@@ -1,146 +1,97 @@
 #include "simple_shell.h"
 
 /**
- * ft_calloc - Allocates and initializes memory for an array of elements.
- * @count: The number of elements to allocate memory for.
- * @size: The size of each element in bytes.
- * Return: A pointer to the allocated and initialized memory,
- * or NULL if memory allocation fails.
+ * _putchar - Write a character to the standard output
+ * @c: The character to be written
+ * Return: On success, 1 is returned; on error, -1 is returned.
  */
-void *ft_calloc(size_t count, size_t size)
+
+int _putchar(char c)
 {
-	void *ptr;
-
-	ptr = malloc(count * size);
-	if (ptr == NULL)
-		return (NULL);
-
-	ft_bzero(ptr, count * size);
-	return (ptr);
+	return (write(1, &c, 1));
 }
 
 /**
- * wordcount - Counts the number of words separated by a specific character.
- * @s: The string to count words in.
- * @c: The character used as a delimiter between words.
- * Return: The number of words found in the string.
+ * _putstr - Write a string to the standard output
+ * @str: The string to be written
  */
 
-static int wordcount(char *s, char c)
+void _putstr(char *str)
 {
+	while (*str != '\0')
+	{
+		_putchar(*str + 0);
+		str++;
+	}
+}
+
+/**
+ * _strncpy - Copy at most n characters from source to destination
+ * @dest: The destination string
+ * @src: The source string
+ * @n: The maximum number of characters to copy
+ * Return: A pointer to the destination string.
+ */
+
+char *_strncpy(char *dest, char *src, int n)
+{
+	int i;
+
+	i = 0;
+
+	for (; i < n && src[i] != '\0'; i++)
+	{
+		dest[i] = src[i];
+	}
+	while (i < n)
+	{
+		dest[i] = '\0';
+		i++;
+	}
+	return (dest);
+}
+
+/**
+ * count_words - Count the number of words in
+ * a string using specified delimiters
+ * @s: The input string
+ * @delimiters: The string containing delimiter characters
+ * Return: The number of words in the input string.
+ */
+
+int count_words(char *s, char *delimiters)
+{
+	int counter = 0;
+	int found = 0;
 	int i = 0;
-	int count = 0;
 
 	while (s[i] != '\0')
 	{
-		while (s[i] == c)
-			i++;
-
-		if (s[i] != '\0')
-			count++;
-
-		while (s[i] != c && s[i] != '\0')
-			i++;
+		if (_strchr(delimiters, s[i]) != NULL)
+			found = 0;
+		else if (found == 0)
+		{
+			found = 1;
+			counter++;
+		}
+		i++;
 	}
-
-	return (count);
+	return (counter);
 }
 
 /**
- * wordlen - Calculates the length of a word delimited by a specific character.
- * @s: The string containing the word.
- * @c: The character used as a delimiter between words.
+ * wordlen - Calculate the length of a word
+ * in a string using specified delimiters
+ * @s: The input string
+ * @delimiters: The string containing delimiter characters
  * Return: The length of the word.
  */
 
-static int wordlen(char *s, char c)
+int wordlen(char *s, char *delimiters)
 {
 	int i = 0;
-	int len = 0;
 
-	while (s[i] != '\0')
-	{
-		while (s[i] == c)
-			i++;
-
-		while (s[i] != c && s[i] != '\0')
-		{
-			i++;
-			len++;
-
-			if (s[i] == c)
-				return (len);
-		}
-	}
-
-	return (len);
-}
-
-/**
- * one_element - Creates an array containing a single element from a string.
- * @s: The string to be stored as a single element in the array.
- * @str: A pointer to an array of strings to store the single element.
- * Return: A pointer to the array containing the single element.
- */
-
-static char **one_element(char *s, char **str)
-{
-	int i = 0;
-	int j = 0;
-
-	str[i] = ft_calloc((ft_strlen(s) + 1), sizeof(char));
-
-	while ((size_t) j < ft_strlen(s))
-	{
-		str[i][j] = s[j];
-		j++;
-	}
-
-	return (str);
-}
-
-/**
- * ft_split - Splits a string into an array of substrings based on a delimiter.
- * @s: The string to be split.
- * @c: The delimiter character.
- * Return: A dynamically allocated array of strings containing the substrings,
- * or NULL on allocation failure.
- */
-
-char **ft_split(const char *s, char c)
-{
-	t_splitvar var;
-
-	var.i = 0;
-	var.k = 0;
-	var.strings = ft_calloc((wordcount((char *)s, c) + 1), sizeof(char *));
-
-	if (wordcount((char *)s, c) == 1)
-		return (one_element((char *)s, var.strings));
-
-	if (var.strings == NULL)
-		return (NULL);
-
-	while (s[var.i] != '\0')
-	{
-		while (s[var.i] == c)
-			var.i++;
-
-		if (s[var.i] == '\0')
-			break;
-
-		var.len = wordlen((char *)&s[var.i], c);
-		var.strings[var.k] = ft_calloc((var.len + 1), sizeof(char));
-
-		if (var.strings[var.k] == NULL)
-			return (NULL);
-
-		var.j = 0;
-		while (s[var.i] != c && s[var.i] != '\0')
-			var.strings[var.k][var.j++] = s[var.i++];
-
-		var.k++;
-	}
-
-	return (var.strings);
+	while (s[i] && !_strchr(delimiters, s[i]))
+		i++;
+	return (i);
 }

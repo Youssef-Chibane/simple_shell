@@ -1,171 +1,143 @@
 #include "simple_shell.h"
 
 /**
- * execute_command - Executes a command with the given arguments.
- * @env: A pointer to the head of the environment linked list.
- * @args: A pointer to an array of strings containing command and arguments.
- * @environ: A pointer to an array of strings containing the environment.
- * Return: 0 on successful execution, -1 on error.
+ * get_last_exit - Track and retrieve the last exit status
+ * @action: Action flag (1 for setting, 0 for retrieving)
+ * @status: Exit status value to set (if action is 1)
+ * Return: The last exit status.
  */
 
-int execute_command(env_t **env, char **args, char **environ)
+int get_last_exit(int action, int status)
 {
-	char **paths;
-	char *path;
-	pid_t id;
-	int	status;
+	static int last_exit;
 
-	paths = NULL;
-	path = NULL;
-	status = 0;
-	if (args && args[0] && (args[0][0] == '/' || args[0][0] == '.'))
-		path = is_path_valid(args[0]);
-	else
-	{
-		if (is_path_exist(env, &paths))
-		{
-			perror("./shell");
-			free_split(paths);
-			return (127);
-		}
-
-		if (path_access(&path, paths, args))
-		{
-			perror("./shell");
-			free_split(paths);
-			free(path);
-			return (127);
-		}
-	}
-
-	id = fork();
-	if (id < 0)
-	{
-		perror("Fork");
-		return (-1);
-	}
-	else if (id == 0)
-	{
-		if (execve(path, args, environ) < 0)
-		{
-			perror("./shell");
-			exit(127);
-		}
-	}
-	else
-	{
-		waitpid(id, &status, 0);
-	}
-	if (paths)
-		free_split(paths);
-	if (path)
-		free(path);
-	return (0);
+	if (action == 1)
+		last_exit = status;
+	return (last_exit);
 }
 
 /**
- * equal_split - Splits a string into two parts at the first occurrence of '='.
- * @var: A pointer to the string to be split.
- * Return: A dynamically allocated array of strings containing two parts,
- * or NULL if '=' is not found.
+ * writerr - Print command not found error message
+ * @tokens: Array of tokens representing the command
+ * @argv: Array of command-line arguments
+ * @error_counter: Pointer to the error counter
  */
 
-char **equal_split(char *var)
+void writerr(char **tokens, char **argv, int *error_counter)
 {
-	int i;
-	char **split;
+	char *err_str;
 
-	i = 0;
-	split = malloc(sizeof(char *) * 3);
+	(*error_counter)++;
+	err_str = _itoa(*error_counter);
+	write(STDERR_FILENO, argv[0], _strlen(argv[0]));
+	write(STDERR_FILENO, ": ", 2);
+	write(STDERR_FILENO, err_str, _strlen(err_str));
+	write(STDERR_FILENO, ": ", 2);
+	free(err_str);
+	write(STDERR_FILENO, tokens[0], _strlen(tokens[0]));
+	write(STDERR_FILENO, ": not found\n", 12);
+}
 
-	while (var[i])
+/**
+ * is_file_in_path - Search for a file in directories specified by path
+ * @path: Colon-separated list of directories
+ * @file: The file to search for
+ * Return: The full path to the file if found, otherwise NULL.
+ */
+
+char *is_file_in_path(char *path, char *file)
+{
+	int i = 0;
+	char *full_path;
+	char **dirs;
+	char *base;
+
+	dirs = ft_split(path, ":");
+	if (!dirs)
+		return (NULL);
+	while (dirs[i])
 	{
-		if (var[i] == '=')
+		base = join(dirs[i], "/");
+		full_path = join(base, file);
+		free(base);
+		if (access(full_path, F_OK) == 0)
 		{
-			split[0] = ft_substr(var, 0, i);
-			i++;
-			split[1] = ft_substr(var, i, ft_strlen(var) + i);
-			split[2] = NULL;
-			return (split);
+			free_tokens(dirs);
+			return (full_path);
 		}
+		free(full_path);
 		i++;
 	}
-
-	free(split);
+	free_tokens(dirs);
 	return (NULL);
 }
 
 /**
- * free_split - Frees memory allocated for an array
- * of strings and the array itself.
- * @split: A pointer to the array of strings to be freed.
- * Return: None.
+ * get_full_path - Get the full path of an executable file
+ * @tokens: Array of tokens representing the command
+ * Return: The full path of the executable file, or NULL if not found.
  */
 
-void free_split(char **split)
+char *get_full_path(char **tokens)
 {
-	int i = 0;
+	char *path = _getenv("PATH");
+	char *full_path = NULL;
 
-	while (split[i])
-		free(split[i++]);
-	free(split);
-}
-
-/**
- * create_envnode - Creates a new node and adds it
- * to the end of the environment linked list.
- * @head: A pointer to the head of the environment linked list.
- * @name: The name of the environment variable.
- * @var: The value of the environment variable.
- * @env_var: The combined name=value representation
- * of the environment variable.
- * Return: None.
- */
-
-void create_envnode(env_t **head, char *name, char *var, char *env_var)
-{
-	env_t *new_node;
-	env_t *last;
-
-	last = NULL;
-	new_node = malloc(sizeof(env_t));
-	if (!new_node)
-		return;
-
-	new_node->var = ft_strdup(env_var);
-	new_node->key = ft_strdup(name);
-	new_node->content = ft_strdup(var);
-	new_node->next = NULL;
-
-	if (*head == NULL)
+	if (tokens[0][0] == '.' && tokens[0][1] ==
+												'/' && access(tokens[0], F_OK) == 0)
+		full_path = _strdup(tokens[0]);
+	else if (tokens[0][0] == '.' && tokens[0][1] ==
+													'.' && tokens[0][1] == '.' && access(tokens[0], F_OK) == 0)
+		full_path = _strdup(tokens[0]);
+	else if (tokens[0][0] == '/' && access(tokens[0], F_OK) == 0)
+		full_path = _strdup(tokens[0]);
+	else
 	{
-		*head = new_node;
-		return;
+		if (!path)
+		{
+			free(full_path);
+			return (NULL);
+		}
+		full_path = is_file_in_path(path, tokens[0]);
 	}
-
-	last = *head;
-	while (last->next != NULL)
-		last = last->next;
-
-	last->next = new_node;
+	return (full_path);
 }
 
 /**
- * add_env_list - Adds a new environment variable node to the linked list.
- * @node: A pointer to a pointer to the head of the environment linked list.
- * @var: The environment variable string in the format "name=value".
- * Return: None.
+ * run_command - Execute a command in a child process
+ * @shell: Pointer to the shell structure
+ * Return: The exit status of the executed command.
  */
 
-void add_env_list(env_t **node, char *var)
+int run_command(t_shell *shell)
 {
-	char **split;
+	pid_t child_pid = 0;
+	char *full_path;
 
-	split = equal_split(var);
-
-	if (!split)
-		return;
-
-	create_envnode(node, split[0], split[1], var);
-	free_split(split);
+	full_path = get_full_path(shell->tokens);
+	if (access(full_path, X_OK) == 0)
+	{
+		child_pid = fork();
+		if (child_pid == -1)
+		{
+			perror(shell->argv[0]);
+			free(full_path);
+			return (1);
+		}
+		if (child_pid == 0)
+		{
+			if (execve(full_path, shell->tokens, shell->env) == -1)
+			{
+				perror(shell->argv[0]);
+				free(full_path);
+				exit(127);
+			}
+		}
+		else
+		{
+			wait(&shell->status);
+		}
+		free(full_path);
+	}
+	return (shell->status % 255);
 }
