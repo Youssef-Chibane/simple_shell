@@ -4,15 +4,13 @@ This is the second ALX team project where we try to recreate the Bash (Unix shel
 ## Screenshots
 
 ![App Screenshot](https://i.imgur.com/EltyYJj.png)
-## WHAT IS PRINTF?
+## WHAT IS SHELL?
 
-A function that produces output according to a format. It takes one or multiple parameters with the help of the variadic functions that we used while implementing our own printf.
+In computing, a shell is a computer program that exposes an operating system's services to a human user or other programs. In general, operating system shells use either a command-line interface (CLI) or graphical user interface (GUI), depending on a computer's role and particular operation. It is named a shell because it is the outermost layer around the operating system.
 
-The first parameter is the format, the string that contains the text to be written to stdout. It can optionally contain embedded format tags that are replaced by the values specified in subsequent additional arguments and formatted as requested.
+### COMMAND-LINE SHELL
 
-The second one is the ellipsis (or the three dots ... ) Depending on the format string, the function may expect a sequence of additional arguments, each containing one value to be inserted instead of each %-tag specified in the format parameter (if any). There should be the same number of these arguments as the number of %-tags that expect a value.
-
-For the return value, if successful, the total number of characters written is returned. On failure, we return -1.
+A command-line interface (CLI) is an operating system shell that uses alphanumeric characters typed on a keyboard to provide instructions and data to the operating system, interactively. For example, a teletypewriter can send codes representing keystrokes to a command interpreter program running on the computer; the command interpreter parses the sequence of keystrokes and responds with an error message if it cannot recognize the sequence of characters, or it may carry out some other program action such as loading an application program, listing files, logging in a user and many others. Operating systems such as UNIX have a large variety of shell programs with different commands, syntax and capabilities, with the POSIX shell being a baseline.
 
 ## FORMATS WE HANDLED
 
