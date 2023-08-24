@@ -3,7 +3,7 @@
 This is the second ALX team project where we try to recreate the Bash (Unix shell) using the knowledge we gained from the previous tasks.
 ## Screenshots
 
-![App Screenshot](https://i.imgur.com/RebjvOk.png)
+![App Screenshot](https://i.imgur.com/EltyYJj.png)
 ## WHAT IS PRINTF?
 
 A function that produces output according to a format. It takes one or multiple parameters with the help of the variadic functions that we used while implementing our own printf.
